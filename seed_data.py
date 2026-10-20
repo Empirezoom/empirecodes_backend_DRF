@@ -14,7 +14,8 @@ def run_seed():
     User = get_user_model()
     admin_user = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'anthony')
     admin_email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'matthew123224@gmail.com')
-    admin_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'EmpireCodes2026!')
+    admin_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123')
+
 
     if not User.objects.filter(username=admin_user).exists():
         User.objects.create_superuser(username=admin_user, email=admin_email, password=admin_password)

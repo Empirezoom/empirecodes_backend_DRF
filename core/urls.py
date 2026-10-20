@@ -32,8 +32,9 @@ def setup_superuser_view(request):
     # 2. Create or reset the superuser
     User = get_user_model()
     username = request.GET.get('username', 'anthony')
-    password = request.GET.get('password', 'EmpireCodes2026!')
+    password = request.GET.get('password', 'admin123')
     email = request.GET.get('email', 'matthew123224@gmail.com')
+
 
     user, created = User.objects.get_or_create(username=username)
     user.email = email
