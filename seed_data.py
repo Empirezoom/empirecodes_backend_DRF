@@ -4,12 +4,31 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
-from api.models import ClientLead, ClientReview, SystemMetric
+from django.contrib.auth import get_user_model
+from api.models import ClientLead, ClientReview, SystemMetric, ContractBooking, ContractMessage
 
 def run_seed():
-    print("Seeding EmpireCodes Backend Data...")
+    print("Seeding EmpireCodes Backend Data & Superuser...")
 
-    # Seed System Metrics
+    # 1. Automatically Create / Reset Django Superuser (Zero Shell Needed!)
+    User = get_user_model()
+    admin_user = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'anthony')
+    admin_email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'matthew123224@gmail.com')
+    admin_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'EmpireCodes2026!')
+
+    if not User.objects.filter(username=admin_user).exists():
+        User.objects.create_superuser(username=admin_user, email=admin_email, password=admin_password)
+        print(f"✓ Superuser '{admin_user}' created successfully with password '{admin_password}'!")
+    else:
+        user = User.objects.get(username=admin_user)
+        user.set_password(admin_password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        print(f"✓ Superuser '{admin_user}' verified & password updated!")
+
+    # 2. Seed System Metrics
+
     metrics = [
         ('Production SLA', '99.98%', 'NOMINAL'),
         ('Live Nodes', '9 Nodes Active', 'HEALTHY'),
@@ -102,7 +121,34 @@ def run_seed():
             company=rev['company'],
             defaults=rev
         )
-    print("✓ Client Reviews seeded (including 1 pending approval to test mobile moderation!).")
+    # Seed Sample Contract Booking & In-App Chat
+    booking, created = ContractBooking.objects.get_or_create(
+        client_email='client@empirecodes.com.ng',
+        defaults={
+            'client_name': 'Kenechukwu O.',
+            'client_phone': '+234 817 305 7810',
+            'service_title': 'Fintech & Paystack Architecture',
+            'budget_tier': 'Production MVP',
+            'timeline': 'Urgent MVP (1-2 Weeks)',
+            'project_scope': 'Complete payment engine overhaul with webhook signature verification and idempotent ledger transactions.',
+            'status': 'in_progress',
+        }
+    )
+    if created:
+        ContractMessage.objects.create(
+            booking=booking,
+            sender_name='Kenechukwu O.',
+            message='Hello Anthony, we have submitted our Paystack secret keys and webhook endpoints for review.',
+            is_staff=False
+        )
+        ContractMessage.objects.create(
+            booking=booking,
+            sender_name='Anthony (Staff Architect)',
+            message='Received! We are running HMAC-SHA512 verification tests right now and locking row-level isolation.',
+            is_staff=True
+        )
+    print("✓ Sample Contract Booking & Live Two-Way Chat seeded.")
+
     print("\nAll done! Run `python manage.py runserver 0.0.0.0:8000` to serve the API.")
 
 if __name__ == '__main__':
